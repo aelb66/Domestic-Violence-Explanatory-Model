@@ -1,0 +1,374 @@
+---
+title: "research project code"
+author: "Alol Elba"
+date: "11/02/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, tidy = TRUE)
+```
+
+```{r 1. loading libraries}
+library(knitr) #tables
+library(readr) #reading csv
+library(dplyr) #data manipulations
+library(tidyr) #data manipulation
+library(scales) #scaling
+library(ggplot2) #plotting
+library(ggpubr) #arranging plots
+library(psych) #descriptive stats
+library(arm) #regression
+library(rgdal) #static maps
+library(stringr) #data tidying
+```
+
+```{r 2. loading all data}
+
+#data provided
+offence.dat <- read_csv("Data/RCI_offencebymonth1.csv") 
+
+#2016 Census data on characteristcs of persons by LGA
+char2016.dat <- read_csv("Data/2016 Census GCP Local Government Areas for NSW/2016Census_G01_NSW_LGA.csv")
+
+#2016 census data on age by LGA
+age2016.dat <- read_csv("Data/2016 Census GCP Local Government Areas for NSW/2016Census_G03_NSW_LGA.csv")
+
+#2016 census data on A/TSI status by LGA
+atsi2016.dat <- read_csv("Data/2016 Census GCP Local Government Areas for NSW/2016Census_G07_NSW_LGA.csv")
+
+#2016 census data on male unemployment rate by LGA
+unemp2016.dat <- read_csv("Data/2016 Census GCP Local Government Areas for NSW/2016Census_G40_NSW_LGA.csv")
+```
+
+```{r 3. transforming offence data}
+
+#keeping original dataset as precaution
+offence.datC <- offence.dat 
+
+#examining data
+table(offence.datC$LGA) 
+offence.datC$LGA <- as.factor(offence.datC$LGA)
+
+#removing 'in custody' level from LGA variable
+#From cross-referencing: Census 2016 LGA data does not contain 5 LGAs in the offence dataset so delete them
+offence.datC <- offence.datC[offence.datC$LGA!="In Custody",]
+offence.datC <- offence.datC[offence.datC$LGA!="Bayside",] 
+offence.datC <- offence.datC[offence.datC$LGA!="Cootamundra-Gundagai",] 
+offence.datC <- offence.datC[offence.datC$LGA!="Dubbo Regional",] 
+offence.datC <- offence.datC[offence.datC$LGA!="Lord Howe Island",] 
+offence.datC <- offence.datC[offence.datC$LGA!="Unincorporated Far West",] 
+offence.datC$LGA <- factor(offence.datC$LGA)
+
+#125 NSW LGAs total
+levels(offence.datC$LGA)
+
+#if theres NAs in subcategory variable, replace with data from offence category variable, else keep as same
+offence.datC$Subcategory <- ifelse(is.na(offence.datC$Subcategory), offence.datC$`Offence category`,
+                                  offence.datC$Subcategory)
+
+#remove astrices in subcateogry variable and white space
+offence.datC$Subcategory <- stringr::str_replace(offence.datC$Subcategory, "\\*", "")
+offence.datC$Subcategory <- stringr::str_trim(offence.datC$Subcategory)
+
+#keeping only DV related assault in Subcategory as its the variable of interest
+offence.datC <- offence.datC[offence.datC$Subcategory == "Domestic violence related assault",]
+
+#aggregate avg counts of DV related offences per LGA between 1995-2020. As we are not looking at time series.
+offence.datC$avg.dv.count <- apply(offence.datC[,4:311], 1, mean)
+
+#data so far
+head(offence.datC)
+```
+
+```{r 4. merging relevant datasets from ABS to offence data}
+#merge only takes 2 arguments, repeating merge
+
+#merge1
+LGA.dat <- merge(
+  offence.datC %>%
+    dplyr::rename(AvgDVcount = avg.dv.count) %>%
+    dplyr::select(LGA, AvgDVcount),
+  char2016.dat %>%
+    dplyr::rename(TotFem = Tot_P_F, #total females counted in 2016 census per NSWLGA
+                  TotPpl = Tot_P_P, #total people counted in 2016 census per NSW LGA
+                  BornAus = Birthplace_Australia_P, #count of people who were born in Australia in 2016 census per NSW LGA
+                  BornOther = Birthplace_Elsewhere_P, #count of people who were born in Australia in 2016 census per NSW LGA
+                  LangEng = Lang_spoken_home_Eng_only_P, #count of people who only spoke English at home in 2016 census per NSW LGA
+                  LangOther = Lang_spoken_home_Oth_Lang_P) %>% #count of people who only another langauge at home in 2016 census per NSW LGA
+    dplyr::select(LGA, TotFem, TotPpl, BornAus, BornOther, LangEng, LangOther),
+  by = "LGA")
+
+#merge2
+LGA.dat <- merge(
+  LGA.dat %>%
+    dplyr::select(LGA, AvgDVcount, TotFem, TotPpl, BornAus, BornOther, LangEng, LangOther),
+  age2016.dat %>%
+    dplyr::rename(TotAgeYoung = Total_15_24_yr, #total people aged 15 to 24 years in 2016 census per LGA NSW
+                  TotAge = Total_Total) %>% #total people reporting ages between 0-99 years in 2016 census per LGA NSW
+    dplyr::select(LGA, TotAgeYoung, TotAge),
+  by = "LGA")
+
+#merge3
+LGA.dat <- merge(
+  LGA.dat %>%
+    dplyr::select(LGA, AvgDVcount, TotFem, TotPpl, BornAus, BornOther, LangEng, LangOther,
+                  TotAgeYoung, TotAge),
+  atsi2016.dat %>%
+    dplyr::rename(TotIndig = Tot_Indigenous_P, #total people who identified as Indigenous in 2016 census per LGA NSW
+                  TotNonIndig = Tot_Non_Indigenous_P) %>% #total people who identified as non-Indigenous in 2016 census per LGA NSW
+    dplyr::select(LGA, TotIndig, TotNonIndig),
+  by = "LGA")
+
+#merge4
+LGA.dat <- merge(
+  LGA.dat %>%
+    dplyr::select(LGA, AvgDVcount, TotFem, TotPpl, BornAus, BornOther, LangEng, LangOther, TotAgeYoung,
+                  TotAge, TotIndig, TotNonIndig),
+  unemp2016.dat %>%
+    dplyr::rename(MUnempRate = Percent_Unem_loyment_M) %>% #total number of males who are unemployed and looking for work in 2016 census per LGA NSW
+    dplyr::select(LGA, MUnempRate),
+  by = "LGA")
+
+#data so far 
+head(LGA.dat)
+```
+
+```{r 5. creating variables for analysis}
+##DVrateper100k = rate of domestic violence related assault per 100,000 population. This is the outcome variable.
+
+#Independent variables:
+ ##FemRate = percentage of each LGA’s females.
+
+ ##CALDrate =  percentage of each LGA’s persons who was born elsewhere to Australia and/ or speaks a language other than English at home.  
+
+ ##YoungAgeRate = as percentage of each LGA’s persons aged between 15-24 years old.
+
+ ##ATSIrate = percentage of each LGA’s persons who identify as Aboriginal and/or Torres Strait.
+
+ ##MUnempRate = percentage of each LGA’s males who are unemployed.
+
+
+#creating variables for analysis and cleaning dataset to variables only of interest
+LGA.dat2 <- LGA.dat %>%
+  group_by(LGA) %>%
+  mutate(DVrateper100k = ((AvgDVcount/TotPpl)*100000)) %>%
+  mutate(FemRate = (TotFem/TotPpl)) %>%
+  mutate(CALDrate = ((BornOther + LangOther)/(BornAus + LangEng + BornOther + LangOther))) %>%
+  mutate(YoungAgeRate = (TotAgeYoung/TotAge)) %>%
+  mutate(ATSIrate = (TotIndig/(TotIndig + TotNonIndig))) %>%
+  mutate(MUnempRate = (MUnempRate/100)) %>%
+  dplyr::select(LGA, DVrateper100k, FemRate, CALDrate, YoungAgeRate, ATSIrate, MUnempRate)
+
+#data so far
+head(LGA.dat2)
+```
+
+```{r 6. descriptive analyses p1}
+
+#Creating table of descriptive statistics for IVs and DV
+DescTable = LGA.dat2 %>% 
+  dplyr::select(DVrateper100k, FemRate, CALDrate, YoungAgeRate, ATSIrate, MUnempRate) %>% 
+  psych::describe() %>%
+  base::as.data.frame() %>%
+  drop_na() %>% 
+  dplyr::select(mean, sd, median, min, max)
+
+round(DescTable,2)
+
+#knitr::kable(DescTable,caption = "Descriptive statistics", booktabs=T), used for report
+
+#Testing Poisson assumption that Y = Poisson distribution
+ggplot(LGA.dat2, aes(x=DVrateper100k)) +
+  geom_histogram(fill="white", color="black")+
+  geom_vline(aes(xintercept=mean(DVrateper100k)), color="purple",
+             linetype="dashed", size = 1.25)+
+  labs(title="Histogram of DV-related reported offences per 100k",
+       x="DV related reported offences per 100k", y = "Frequency")+
+  theme_classic() +
+  theme(strip.text.x = element_text(size=9),
+        plot.title = element_text(size=11),
+        axis.title.x = element_text(size=9),
+        axis.text.x = element_text(size=8),
+        axis.title.y = element_text (size=9),
+        axis.text.y = element_text(size=8))
+```
+
+```{r 7. descriptive analyses p2}
+
+#association between LGA-level DV-related reported offences and LGA-level rate of females
+Femgg <- ggplot(LGA.dat2,
+       aes(y=DVrateper100k, x=FemRate)) +
+  geom_jitter(aes(colour = LGA)) +
+  geom_smooth(method = loess, se = FALSE, fullrang = TRUE, colour = "purple") +
+  labs(x = "Female population rate (%)", y=" ") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  theme_classic() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(colour="light grey", size=0.2),
+        panel.grid.minor.y = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=9),
+        strip.background = element_blank(),
+        axis.title.x = element_text(size=9),
+        axis.text.x = element_text(size=8),
+        axis.text.y = element_text(size=8))
+
+#association between LGA-level DV-related reported offences and LGA-level rate of CALD persons
+Caldgg <- ggplot(LGA.dat2,
+       aes(y=DVrateper100k, x=CALDrate)) +
+  geom_jitter(aes(colour = LGA)) +
+  geom_smooth(method = loess, se = FALSE, fullrang = TRUE, colour = "purple") +
+  labs(x = "CALD population rate (%)", y=" ") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  theme_classic() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(colour="light grey", size=0.2),
+        panel.grid.minor.y = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=9),
+        strip.background = element_blank(),
+        axis.title.x = element_text(size=9),
+        axis.text.x = element_text(size=8),
+        axis.text.y = element_text(size=8))
+
+#association between LGA-level DV-related reported offences and LGA-level rate of 15-24 year olds (young age group)
+YoungAgeRategg <- ggplot(LGA.dat2,
+       aes(y=DVrateper100k, x=YoungAgeRate)) +
+  geom_jitter(aes(colour = LGA)) +
+  geom_smooth(method = loess, se = FALSE, fullrang = TRUE, colour = "purple") +
+  labs(x = "Young age population rate (%)", y=" ") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  theme_classic() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(colour="light grey", size=0.2),
+        panel.grid.minor.y = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=9),
+        strip.background = element_blank(),
+        axis.title.x = element_text(size=9),
+        axis.text.x = element_text(size=8),
+        axis.text.y = element_text(size=8))
+
+#association between LGA-level DV-related reported offences and LGA-level rate of ATSI persons
+ATSIrategg <- ggplot(LGA.dat2,
+       aes(y=DVrateper100k, x=ATSIrate)) +
+  geom_jitter(aes(colour = LGA)) +
+  geom_smooth(method = loess, se = FALSE, fullrang = TRUE, colour = "purple") +
+  labs(x = "ATSI population rate (%)", y=" ") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  theme_classic() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(colour="light grey", size=0.2),
+        panel.grid.minor.y = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=9),
+        strip.background = element_blank(),
+        axis.title.x = element_text(size=9),
+        axis.text.x = element_text(size=8),
+        axis.text.y = element_text(size=8))
+
+#association between LGA-level DV-related reported offences and LGA-level rate of male unemployment
+MUnempRategg <- ggplot(LGA.dat2,
+       aes(y=DVrateper100k, x=MUnempRate)) +
+  geom_jitter(aes(colour = LGA)) +
+  geom_smooth(method = loess, se = FALSE, fullrang = TRUE, colour = "purple") +
+  labs(x = "Male unemployment population rate (%)", y=" ") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  theme_classic() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(colour="light grey", size=0.2),
+        panel.grid.minor.y = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=9),
+        strip.background = element_blank(),
+        axis.title.x = element_text(size=9),
+        axis.text.x = element_text(size=8),
+        axis.text.y = element_text(size=8))
+
+descGrid <- ggarrange(Femgg,Caldgg,YoungAgeRategg,ATSIrategg,MUnempRategg, ncol=2, nrow=3)
+
+annotate_figure(descGrid,
+                top = text_grob("LGA-level DV related offences by independent variables",
+                                size =11,
+                                face ="bold"),
+                left = text_grob("DV related reported offences (per 100,000)", rot=90,
+                                 size = 10))
+```
+
+
+
+### REGRESSION PREPARATION
+```{r 9. scaling data for regression}
+
+LGA.dat.scaled <-  LGA.dat2 %>%
+  dplyr::select(LGA, DVrateper100k)
+
+LGA.dat.scaled$z.FemRate = scale(LGA.dat2$FemRate)
+LGA.dat.scaled$z.CALDrate = scale(LGA.dat2$CALDrate)
+LGA.dat.scaled$z.YoungAgeRate = scale(LGA.dat2$YoungAgeRate)
+LGA.dat.scaled$z.ATSIrate = scale(LGA.dat2$ATSIrate)
+LGA.dat.scaled$z.MUnempRate = scale(LGA.dat2$MUnempRate)
+
+#scaled data
+head(LGA.dat.scaled )
+```
+
+```{r 10. poisson regression base model}
+DV.base <- glm(DVrateper100k ~ z.YoungAgeRate,
+                         family=poisson(link = log), 
+                         data=LGA.dat.scaled)
+display(DV.base)
+
+#quasi R^2 = 0.2%
+1-(DV.base$deviance/DV.base$null)
+```
+
+```{r 11. candidate poisson models}
+###young age rate + female rate
+DV.m1 <- glm(DVrateper100k ~ z.YoungAgeRate + z.FemRate,
+                         family=poisson(link = log), 
+                         data=LGA.dat.scaled)
+display(DV.m1)
+
+#quasi R^2 = 20.16%
+1-(DV.m1$deviance/DV.m1$null)
+
+#-----------------------------
+###young age rate + female rate + CALD rate
+DV.m2 <- glm(DVrateper100k ~ z.YoungAgeRate + z.FemRate + z.CALDrate,
+                         family=poisson(link = log), 
+                         data=LGA.dat.scaled)
+
+display(DV.m2)
+
+#quasi R^2 = 28.75%
+1-(DV.m2$deviance/DV.m2$null)
+
+#-----------------------------
+###young age rate + female rate + CALD rate + male unemployment rate
+DV.m3 <- glm(DVrateper100k ~ z.YoungAgeRate + z.FemRate + z.CALDrate + z.MUnempRate,
+                         family=poisson(link = log), 
+                         data=LGA.dat.scaled)
+
+display(DV.m3)
+
+#quasi R^2 = 58.42%
+1-(DV.m3$deviance/DV.m3$null)
+
+#-----------------------------
+
+###young age rate + female rate + CALD rate + male unemployment rate + ATSI rate
+DV.m4 <- glm(DVrateper100k ~ z.YoungAgeRate + z.FemRate + z.CALDrate + z.MUnempRate + z.ATSIrate,
+                         family=poisson(link = log), 
+                         data=LGA.dat.scaled)
+
+display(DV.m4)
+
+#quasi R^2 = 81.88%
+1-(DV.m4$deviance/DV.m4$null)
+
+```
+
