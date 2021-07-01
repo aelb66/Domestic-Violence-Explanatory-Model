@@ -1,4 +1,4 @@
-# How I created an explanatory model of domestic violence in NSW LGAs.
+# How I created an explanatory model of domestic violence in NSW LGAs using R.
 
 ### What is explanatory analysis?
 We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights.
