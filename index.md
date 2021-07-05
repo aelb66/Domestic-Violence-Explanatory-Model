@@ -8,7 +8,6 @@ For differences between explanatory, exploratory and descriptive research click 
 ### Background to the project
 Domestic violence (DV) is recognised as a major Australian public health crisis with one in three homicide and sexual assault reports family and DV related (1). Research suggests that those at a higher risk of experiencing DV are young women (i.e., 15-24 years old), those living in rural/remotes areas; as well as areas with a higher proportion of Indigenous residents, culturally and linguistically diverse (CALD) residents and those with higher unemployment rates (2,3,4). Although the research generalises to the Australian community, it would be interesting to see if this is reflected in NSW. Therefore, I hypothesize that socio-demographic and socioeconomic factors are important in explaining DV rates in NSW local government areas (LGAs). 
 
-
 ### Domestic violence in Australia
 It is well known that gender plays a role in DV with on average, one Australian woman each week murdered by her current or former partner (5). Furthermore, the economic cost of domestic violence against women and children in Australia alone is estimated at $21.7 *billion* per year (6). As females are more prone to domestic violence related assault compared to males, I theorise that higher female population rates may increase DV occurrences. Young Australian women are less likely to comprehend the breadth and magnitude of DV-related behaviour, and experience higher reported occurrences of DV compared to older Australian women (7,8). Therefore, I theorise that higher rates of rate of young persons aged between 15-24 years old may increase DV occurrences.
 
@@ -43,6 +42,7 @@ These were retrieved from the ABS data.
 Below are the libraries I used in this project. Its useful to comment everything so when you get back to viewing the code a month, a year later, you don't get lost in your code. Especially useful if you have terrible memory like me.
 ```r
 library(knitr) #tables
+library(data.table) #tables
 library(readr) #reading csv
 library(dplyr) #data manipulations
 library(tidyr) #data manipulation
@@ -85,7 +85,7 @@ As the model is intended for explanation, it will be assessed using McFadden’s
 ## 4. Pre-processing 
 Datasets will be cleaned, merged, then variables of interest transformed for ease of interpretation. As most people will say, this takes the most amount of your time. For me, around 70-80% of the project is just pre-processing the data :astonished:.
 
-### Transforming the offence data
+#### Transforming the offence data
 First I kept a copy of the original file and examined the data. A cropped snippet of the output is shown. 
 ```r
 #keeping original dataset as precaution
@@ -140,8 +140,10 @@ Data so far:
 ![image](https://user-images.githubusercontent.com/75398560/124226282-3352e480-db4c-11eb-9e9c-a7aac1b3dbff.png)
 
 
-### Merging relevant datasets from ABS data to offence data
-`merge` function from `tidyverse` can only take 2 arguments so I had to repeat merges. This can be tedious if you have several datasets and I'm sure there is a better way to merge data together :sweat_smile:. Do your research!
+#### Merging relevant datasets from ABS data to offence data
+`merge` function from `tidyverse` can only take 2 arguments so I had to repeat merges 4 times. This can be tedious if you have several datasets and I'm sure there is a better way to merge data together :sweat_smile:. Do your research!
+
+Sample code of two merges below.
 ```r
 #merge1
 LGA.dat <- merge(
@@ -167,33 +169,12 @@ LGA.dat <- merge(
                   TotAge = Total_Total) %>% #total people reporting ages between 0-99 years in 2016 census per LGA NSW
     dplyr::select(LGA, TotAgeYoung, TotAge),
   by = "LGA")
-
-#merge3
-LGA.dat <- merge(
-  LGA.dat %>%
-    dplyr::select(LGA, AvgDVcount, TotFem, TotPpl, BornAus, BornOther, LangEng, LangOther,
-                  TotAgeYoung, TotAge),
-  atsi2016.dat %>%
-    dplyr::rename(TotIndig = Tot_Indigenous_P, #total people who identified as Indigenous in 2016 census per LGA NSW
-                  TotNonIndig = Tot_Non_Indigenous_P) %>% #total people who identified as non-Indigenous in 2016 census per LGA NSW
-    dplyr::select(LGA, TotIndig, TotNonIndig),
-  by = "LGA")
-
-#merge4
-LGA.dat <- merge(
-  LGA.dat %>%
-    dplyr::select(LGA, AvgDVcount, TotFem, TotPpl, BornAus, BornOther, LangEng, LangOther, TotAgeYoung,
-                  TotAge, TotIndig, TotNonIndig),
-  unemp2016.dat %>%
-    dplyr::rename(MUnempRate = Percent_Unem_loyment_M) %>% #total number of males who are unemployed and looking for work in 2016 census per LGA NSW
-    dplyr::select(LGA, MUnempRate),
-  by = "LGA")
 ```
 
 Data so far:
 ![image](https://user-images.githubusercontent.com/75398560/124228219-38656300-db4f-11eb-9c19-dbeb109ccfb9.png)
 
-### Creating variables for analysis
+#### Creating variables for analysis
 So I have six variables of interest that I'm only interested in. These variables were selected using theory (journal articles). As I am not looking at count data, as this is hard to interpret I am creating the following variables:
 
 - _DVrateper100k_ = rate of domestic violence related assault per 100,000 population. This is the dependent (outcome) variable.
@@ -222,6 +203,80 @@ Data so far:
 
 
 ## 5. Descriptive Analysis
+#### Poisson regression assumption testing
+For Poisson regression to occur, the assumption that the outcome variable follows a Poisson distribution must be met. Below graph shows that the DV occurrences take on positive values within an interval of space and follows a Poisson distribution.
+
+Investigating descriptive statistics from the below table (made from `setattr` function from the`data.table` library and `kable` function from `knitr` library) shows that most variances are quite small, suggesting that most variable data are clustered together. 
+
+The mean DV occurrence is approximately 44 people per 100,000 individuals with a standard deviation of 66.81, indicating a larger variation, and an abnormal distribution also confirmed in the graph. The average rate of females per NSW LGA is 50% with a sd of 0.01. Additionally, the average rate of CALD identified people per NSW LGA is 14% with a standard deviation of 0.16. The average rate of young people aged 15-24 years per NSW LGA is 11% with a standard deviation of 0.02. Furthermore, the average rate of ATSI identified people per NSW LGA is 7%, which may seem quite low compared to the other groups, however it is larger than the reported 3.3%  of the total estimated Australian population that Indigenous people represent (16). Though, this may allude to signs of [overrepresentation of Indigenous Australians](https://www.bocsar.nsw.gov.au/Pages/bocsar_pages/Aboriginal-over-representation.aspx) in crime statistics as mentioned heavily in papers. Lastly, average rate of male unemployment per NSW LGA is 6% with a standard deviation of 0.02.
+```r
+ggplot(LGA.dat2, aes(x=DVrateper100k)) +
+  geom_histogram(fill="white", color="black")+
+  geom_vline(aes(xintercept=mean(DVrateper100k)), color="purple",
+             linetype="dashed", size = 1.25)+
+  labs(x="DV related reported assault per 100k", y = "Frequency")+
+  theme_classic() +
+  theme(strip.text.x = element_text(size=9),
+        axis.title.x = element_text(size=9),
+        axis.text.x = element_text(size=8),
+        axis.title.y = element_text (size=9),
+        axis.text.y = element_text(size=8))
+
+```
+![image](https://user-images.githubusercontent.com/75398560/124446547-df523500-ddc3-11eb-8363-7a88acf1fee3.png)
+
+```r
+DescTable <- LGA.dat2 %>% 
+  dplyr::select(DVrateper100k, FemRate, CALDrate, YoungAgeRate, ATSIrate, MUnempRate) %>% 
+  psych::describe() %>%
+  base::as.data.frame() %>%  
+  dplyr::select(mean, sd, median, min, max)
+  
+(setattr(DescTable, "row.names", c("LGA", "DV related reported assault per 100k","Female rate","CALD rate","Young age rate",
+ "ATSI rate","Male unemployment rate")))
+ 
+DescTable <- round(DescTable,2)
+knitr::kable(DescTable,caption = "Descriptive statistics", booktabs=T)
+```
+![image](https://user-images.githubusercontent.com/75398560/124447029-5687c900-ddc4-11eb-88b8-1a239fea9073.png)
+
+_(The above table format only shows up when you knit the file - the output straight from R Studio looks basic af so don't be worried!)_
+
+#### Scatterplots between DV and each IV
+For the female population rate plot, there shows slight non-linear associations to DV occurrence. There is a slow growth from approximately 80 DV occurrences per 100,000 to 140 DV occurrences per 100,000 when shifting toward 45% female population, though this may be attributed to outlier LGAs. This then plateaus and decreases in DV occurrence when female population increases.
+
+Both the CALD population rate plot and the young age population plot showed no obvious signs of a relationship with DV occurrence per 100,000. The ATSI population rate however, shows an quite a strong increase in DV occurrence per 100,000 when ATSI population rate increases. Similarly, the male unemployment rate plot shows a very gradual increase in DV occurrences with an increase in male unemployment rate, however it then rises dramatically towards the end. This steep rise may be attributed to the outlier LGA. 
+
+Below shows sample code of one of the many graphs I made - you can see the full code at my github. Link [here](https://github.com/aelb66/Domestic-Violence-Explanatory-Model).
+```r
+#association between LGA-level DV-related reported offences and LGA-level rate of male unemployment
+MUnempRategg <- ggplot(LGA.dat2,
+       aes(y=DVrateper100k, x=MUnempRate)) +
+  geom_jitter(aes(colour = LGA)) +
+  geom_smooth(method = loess, se = FALSE, fullrang = TRUE, colour = "purple") +
+  labs(x = "Male unemployment population rate (%)", y=" ") +
+  scale_x_continuous(labels = percent_format(accuracy = 1)) +
+  theme_classic() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(colour="light grey", size=0.2),
+        panel.grid.minor.y = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=9),
+        strip.background = element_blank(),
+        axis.title.x = element_text(size=9),
+        axis.text.x = element_text(size=8),
+        axis.text.y = element_text(size=8))
+
+#displays graphs in grid form
+descGrid <- ggarrange(Femgg,Caldgg,YoungAgeRategg,ATSIrategg,MUnempRategg, ncol=2, nrow=3)
+
+#adds annotations
+annotate_figure(descGrid,
+                left = text_grob("DV related reported assault (per 100,000)", rot=90,
+                                 size = 10))
+```
+![image](https://user-images.githubusercontent.com/75398560/124450224-900e0380-ddc7-11eb-94fb-52e2a25fb1cb.png)
+
 
 
 _NOTE:_ I'm not perfect and neither is my code :stuck_out_tongue_winking_eye:. I'm learning new/more efficient ways to code all the time, so if you find a better way of doing things then go for that! I'm just putting this code and project out there for those interested in the data science field and to show you what I love doing :blush:.
