@@ -1,9 +1,7 @@
 # How I created an explanatory model of domestic violence in NSW LGAs using R.
 
 ### :question: What is explanatory analysis? 
-We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights.
-
-For differences between explanatory, exploratory and descriptive research click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). To view differences between explanatory modelling vs predictive modelling click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). 
+We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights. For differences between explanatory, exploratory and descriptive research click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). To view differences between explanatory modelling vs predictive modelling click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). 
 
 ### Background to the project
 Domestic violence (DV) is recognised as a major Australian public health crisis with one in three homicide and sexual assault reports family and DV related (1). Research suggests that those at a higher risk of experiencing DV are young women (i.e., 15-24 years old), those living in rural/remotes areas; as well as areas with a higher proportion of Indigenous residents, culturally and linguistically diverse (CALD) residents and those with higher unemployment rates (2,3,4). Although the research generalises to the Australian community, it would be interesting to see if this is reflected in NSW. Therefore, I hypothesize that socio-demographic and socioeconomic factors are important in explaining DV rates in NSW local government areas (LGAs). 
