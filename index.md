@@ -72,7 +72,7 @@ unemp2016.dat <- read_csv("Data/2016 Census GCP Local Government Areas for NSW/2
 ```
 
 ## 3. Method
-As the outcome variable is aggregated count data, binary logistic regression and multiple linear regression may not be suitable. Furthermore, the model is to explain the rate of DV occurrences in NSW LGAs. Therefore, Poisson regression will be used and interpreted as every one unit increase in predictor *x*, the expected number of domestic violence related reported assaults per 100,000 changes by a factor of e^{beta_x}, when all other variables in the model are held at zero. I know, this interpretation sounds whack - but perhaps this site explains it better than I could also have a look at this [Poisson regression example](https://stats.idre.ucla.edu/r/dae/poisson-regression/), hopefully it makes more sense?
+As the outcome variable is aggregated count data, binary logistic regression and multiple linear regression may not be suitable. Furthermore, the model is to explain the rate of DV occurrences in NSW LGAs. Therefore, Poisson regression will be used and interpreted as every one unit increase in predictor *x*, the expected number of domestic violence related reported assaults per 100,000 changes by a factor of e^{beta_x}, when all other variables in the model are held at zero. I know, this interpretation sounds whack - but perhaps this site explains it better than I could, also have a look at this [Poisson regression example](https://stats.idre.ucla.edu/r/dae/poisson-regression/), hopefully it makes more sense?
 
 After confirming the Poisson distribution assumption of Poisson regression, I will then examine associations between sociodemographic and socioeconomic variables and DV occurrence through association plots.
 
