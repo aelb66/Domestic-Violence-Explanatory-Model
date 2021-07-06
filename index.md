@@ -72,7 +72,7 @@ unemp2016.dat <- read_csv("Data/2016 Census GCP Local Government Areas for NSW/2
 ```
 
 ## 3. Method
-As the outcome variable is aggregated count data, binary logistic regression and multiple linear regression may not be suitable. Furthermore, the model is to explain the rate of DV occurrences in NSW LGAs. Therefore, Poisson regression will be used and interpreted as every one unit increase in predictor *x*, the expected number of domestic violence related reported assaults per 100,000 changes by a factor of e^{beta_x}, when all other variables in the model are held at zero. I know, this interpretation sounds whack - but perhaps this site explains it better than I could, also have a look at this [Poisson regression example](https://stats.idre.ucla.edu/r/dae/poisson-regression/), hopefully it makes more sense?
+As the outcome variable is aggregated count data, binary logistic regression and multiple linear regression may not be suitable. Furthermore, the model is to explain the rate of DV occurrences in NSW LGAs. Therefore, Poisson regression will be used and interpreted as every one unit increase in predictor *x*, the expected number of domestic violence related reported assaults per 100,000 changes by a factor of ![image](https://user-images.githubusercontent.com/75398560/124584911-198d0680-de98-11eb-96ff-b2f96c95f9b5.png) (or e^{beta_x} in Latex form), when all other variables in the model are held at zero. I know, this interpretation sounds whack - but perhaps this site explains it better than I could, also have a look at this [Poisson regression example](https://stats.idre.ucla.edu/r/dae/poisson-regression/), hopefully it makes more sense?
 
 After confirming the Poisson distribution assumption of Poisson regression, I will then examine associations between sociodemographic and socioeconomic variables and DV occurrence through association plots.
 
@@ -84,7 +84,7 @@ As the model is intended for explanation, it will be assessed using McFadden’s
 Datasets will be cleaned, merged, then variables of interest transformed for ease of interpretation. As most people will say, this takes the most amount of your time. For me, around 70-80% of the project is just pre-processing the data :astonished:.
 
 ### Transforming the offence data
-First I kept a copy of the original file and examined the data. A cropped snippet of the output is shown. 
+First I kept a copy of the original file and examined the data. 
 ```r
 #keeping original dataset as precaution
 offence.datC <- offence.dat 
@@ -97,7 +97,7 @@ Looking at the data (cropped):
 ![image](https://user-images.githubusercontent.com/75398560/124451614-eb8cc100-ddc8-11eb-9964-65ebdb48282d.png)
 
 ### Deleting variables
-I deleted some variables in the datasets that weren't found in one or the other dataset, or were irrelevant to the data. Resulted in 125 NSW LGAs in total. I also turned the LGA variable(column) in offence data as a factor from a numeric variable, which it isn't. 
+I deleted some variables in the datasets that weren't found in one or the other dataset, or were irrelevant to the data. Resulted in 125 NSW LGAs in total. I also turned the LGA variable (i.e., column) in offence data as a factor from a numeric variable. 
 ```r
 #removing 'in custody' level from LGA variable
 #From cross-referencing: Census 2016 LGA data does not contain 5 LGAs in the offence dataset so delete them
@@ -204,7 +204,7 @@ Data so far:
 ### Poisson regression assumption testing
 For Poisson regression to occur, the assumption that the outcome variable follows a Poisson distribution must be met. Below graph shows that the DV occurrences take on positive values within an interval of space and follows a Poisson distribution.
 
-Investigating descriptive statistics from the below table (made from `setattr` function from the`data.table` library and `kable` function from `knitr` library) shows that most variances are quite small, suggesting that most variable data are clustered together. 
+Investigating descriptive statistics from the below table (made from `setattr` function from the `data.table` library and `kable` function from `knitr` library) shows that most variances are quite small, suggesting that most variable data are clustered together. 
 
 The mean DV occurrence is approximately 44 people per 100,000 individuals with a standard deviation of 66.81, indicating a larger variation, and an abnormal distribution also confirmed in the graph. The average rate of females per NSW LGA is 50% with a sd of 0.01. Additionally, the average rate of CALD identified people per NSW LGA is 14% with a standard deviation of 0.16. The average rate of young people aged 15-24 years per NSW LGA is 11% with a standard deviation of 0.02. Furthermore, the average rate of ATSI identified people per NSW LGA is 7%, which may seem quite low compared to the other groups, however it is larger than the reported 3.3%  of the total estimated Australian population that Indigenous people represent (16). Though, this may allude to signs of [overrepresentation of Indigenous Australians](https://www.bocsar.nsw.gov.au/Pages/bocsar_pages/Aboriginal-over-representation.aspx) in crime statistics as mentioned heavily in papers. Lastly, average rate of male unemployment per NSW LGA is 6% with a standard deviation of 0.02.
 ```r
@@ -291,7 +291,7 @@ LGA.dat.scaled$z.MUnempRate = scale(LGA.dat2$MUnempRate)
 #scaled data
 head(LGA.dat.scaled )
 ```
-![image](https://user-images.githubusercontent.com/75398560/124560419-20a81a80-de80-11eb-8ce4-eac4e2d6308e.png)
+Data looks like this: ![image](https://user-images.githubusercontent.com/75398560/124560419-20a81a80-de80-11eb-8ce4-eac4e2d6308e.png)
 
 ### Poisson regression base model
 The *Base Model* is used as a reference point and consisted of only the young age variable. Poisson regression was created using `glm` function with parameter `family=poisson`. This model resulted in being statistically significant with the log odds coefficient estimate being more than two standard errors from zero. The *Base Model* shows that 0.2% of the variability in DV occurrence per 100,000 can be explained by its relationship to the young age rate. Which is very low, like less than 1% low. So clearly, theres definitely more variables that can explain DV occurrence. 
