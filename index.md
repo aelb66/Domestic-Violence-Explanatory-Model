@@ -110,7 +110,7 @@ offence.datC <- offence.datC[offence.datC$LGA!="Unincorporated Far West",]
 offence.datC$LGA <- factor(offence.datC$LGA)
 ```
 
-### Handling missing values
+### Handling missing values 
 There are two columns; one is the column we are interested in _Subcategory_ and there is a somewhat duplicated column called _Offence category_. Our variable of interest has many missing values, we can see from looking at the data that we can fill in those missing values from the _Offence category_ variable. 
 ```r
 #if theres NAs in subcategory variable, replace with data from offence category variable, else keep as same
