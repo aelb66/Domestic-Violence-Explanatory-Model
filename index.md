@@ -1,4 +1,4 @@
-# How I created an explanatory model of domestic violence in NSW LGAs using R.
+# How I created an explanatory model of domestic violence in NSW LGAs using R
 
 ### :question: What is explanatory analysis? 
 We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights. For differences between explanatory, exploratory and descriptive research click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). To view differences between explanatory modelling vs predictive modelling click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). 
