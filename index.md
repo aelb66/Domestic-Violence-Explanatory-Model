@@ -1,6 +1,6 @@
 # How I created an explanatory model of domestic violence using R and how you can too
 
-Check out my [personal website](www.alolelba.com) for more projects.
+Check out my [personal website](https://www.alolelba.com/) for more projects.
 
 ### What is explanatory analysis? 
 We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights. Here we want to know **what** variables explain domestic violence rates and **how** much % do they account for domestic violence rates. This is different to classification and prediction analyses where we want to predict a class or value. In explanatory analysis we don't really care about the predictive nature of the model, rather how much the model can explain domestic violence rates.
