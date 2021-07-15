@@ -1,7 +1,9 @@
-# How I created an explanatory model of domestic violence in NSW LGAs using R
+# How I created an explanatory model of domestic violence using R and how you can too
 
-### :question: What is explanatory analysis? 
-We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights. For differences between explanatory, exploratory and descriptive research click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). To view differences between explanatory modelling vs predictive modelling click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). 
+### What is explanatory analysis? 
+We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights. Here we want to know **what** variables explain domestic violence rates and **how** much % do they account for domestic violence rates. This is different to classification and prediction analyses where we want to predict a class or value. In explanatory analysis we don't really care about the predictive nature of the model, rather how much the model can explain domestic violence rates.
+- For differences between explanatory vs exploratory vs descriptive research click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). 
+- To view differences between explanatory modelling vs predictive modelling click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). 
 
 ### Background to the project
 Domestic violence (DV) is recognised as a major Australian public health crisis with one in three homicide and sexual assault reports family and DV related (1). Research suggests that those at a higher risk of experiencing DV are young women (i.e., 15-24 years old), those living in rural/remotes areas; as well as areas with a higher proportion of Indigenous residents, culturally and linguistically diverse (CALD) residents and those with higher unemployment rates (2,3,4). Although the research generalises to the Australian community, it would be interesting to see if this is reflected in NSW. Therefore, I hypothesize that socio-demographic and socioeconomic factors are important in explaining DV rates in NSW local government areas (LGAs). 
@@ -20,7 +22,7 @@ Lastly, research suggests that higher male unemployment lowers the risk of DV ag
 
 Although DV prevention campaigns, helplines and programs are widely advertised in Australia, only 50% of DV occurrences are reported to the police, leading to a gross under-estimation of DV data and further caution in interpreting the results of the analysis.
 
-## Data :page_facing_up:
+## Data 
 Data includes [reported criminal incidents per month by NSW LGA from 1995 to 2020](https://www.bocsar.nsw.gov.au/Pages/bocsar_datasets/Offence.aspx) (i.e., offence data) and contains 8,122 cases with 312 variables (15). Additionally, data from the [2016 Census represent sociodemographic and socioeconomic characteristics of persons by NSW LGA](https://datapacks.censusdata.abs.gov.au/datapacks/) (i.e., ABS data) (16). This contains 110 files and an average of 132 cases with 150 variables. The data can be retrieved from my github repository as well as the embedded links. 
 
 As I am explaining DV occurrences across NSW LGAs, the dependent variable will be *Domestic violence related reported assault per 100,000 population*. This is retrieved from the offence data. 
@@ -39,7 +41,7 @@ Based on the literature, the independent variables will be:
 
 These were retrieved from the ABS data. 
 
-## 1. Libraries :books:
+## 1. Libraries 
 Below are the libraries I used in this project. Its useful to comment everything so when you get back to viewing the code a month, a year later, you don't get lost in your code. Especially useful if you have terrible memory like me.
 ```r
 library(knitr) #tables
@@ -84,9 +86,9 @@ Model selection involves creating a baseline model involving the intercept and t
 As the model is intended for explanation, it will be assessed using McFadden’s quasi-*R²* (17) as well as the regression coefficient standard errors with respective *p*-values. 
 
 ## 4. Pre-processing 
-Datasets will be cleaned, merged, then variables of interest transformed for ease of interpretation. As most people will say, this takes the most amount of your time. For me, around 70-80% of the project is just pre-processing the data :astonished:.
+Datasets will be cleaned, merged, then variables of interest transformed for ease of interpretation. As most people will say, this takes the most amount of your time. For me, around 70-80% of the project is just pre-processing the data.
 
-### Transforming the offence data
+### 4.1 Transforming the offence data
 First I kept a copy of the original file and examined the data. 
 ```r
 #keeping original dataset as precaution
@@ -99,7 +101,7 @@ offence.datC$LGA <- as.factor(offence.datC$LGA)
 Looking at the data (cropped): 
 ![image](https://user-images.githubusercontent.com/75398560/124451614-eb8cc100-ddc8-11eb-9964-65ebdb48282d.png)
 
-### Deleting variables
+### 4.2 Deleting variables
 I deleted some variables in the datasets that weren't found in one or the other dataset, or were irrelevant to the data. Resulted in 125 NSW LGAs in total. I also turned the LGA variable (i.e., column) in offence data as a factor from a numeric variable. 
 ```r
 #removing 'in custody' level from LGA variable
@@ -113,14 +115,14 @@ offence.datC <- offence.datC[offence.datC$LGA!="Unincorporated Far West",]
 offence.datC$LGA <- factor(offence.datC$LGA)
 ```
 
-### Handling missing values 
+### 4.3 Handling missing values 
 There are two columns; one is the column we are interested in _Subcategory_ and there is a somewhat duplicated column called _Offence category_. Our variable of interest has many missing values, we can see from looking at the data that we can fill in those missing values from the _Offence category_ variable. 
 ```r
 #if theres NAs in subcategory variable, replace with data from offence category variable, else keep as same
 offence.datC$Subcategory <- ifelse(is.na(offence.datC$Subcategory), offence.datC$`Offence category`, offence.datC$Subcategory)
 ```
 
-### Standardising text data
+### 4.4 Standardising text data
 I cleaned up the text by removing characters irrelevant to data like astrices and white space. This is done through `stringr` from the `tidyverse` package. 
 ```r
 #remove astrices in subcateogry variable and white space
@@ -128,7 +130,7 @@ offence.datC$Subcategory <- stringr::str_replace(offence.datC$Subcategory, "\\*"
 offence.datC$Subcategory <- stringr::str_trim(offence.datC$Subcategory)
 ```
 
-### Extracting the dependent variable and aggregating counts
+### 4.5 Extracting the dependent variable and aggregating counts
 If you inspect the data you can see there are multiple crime subcategories. Since we are only interested in domestic violence we will only keep this level of the subcategory variable in analysis. As I am not looking at time series data I chose to aggregate the average counts of DV. You can choose to just look at a particular year or month (cross-sectional data) though you will lose A LOT of data :grimacing:. 
 ```r
 #keeping only DV related assault in Subcategory as its the variable of interest
@@ -142,7 +144,7 @@ Data so far:
 ![image](https://user-images.githubusercontent.com/75398560/124451386-ad8f9d00-ddc8-11eb-85e0-6a11f19200c2.png)
 
 
-### Merging relevant datasets from ABS data to offence data
+### 4.6 Merging relevant datasets from ABS data to offence data
 `merge` function from `tidyverse` can only take 2 arguments so I had to repeat merges 4 times. This can be tedious if you have several datasets and I'm sure there is a better way to merge data together :sweat_smile:. Do your research!
 
 Sample code of two merges below.
@@ -176,7 +178,7 @@ LGA.dat <- merge(
 Data so far:
 ![image](https://user-images.githubusercontent.com/75398560/124451252-8b961a80-ddc8-11eb-96ac-f991b829a736.png)
 
-### Creating variables for analysis
+### 4.7 Creating variables for analysis
 So I have six variables of interest that I'm only interested in. These variables were selected using theory (journal articles). As I am not looking at count data, as this is hard to interpret I am creating the following variables:
 
 - _DVrateper100k_ = rate of domestic violence related assault per 100,000 population. This is the dependent (outcome) variable.
@@ -204,7 +206,7 @@ Data so far:
 ![image](https://user-images.githubusercontent.com/75398560/124451016-5689c800-ddc8-11eb-9093-bf9e2ce488f5.png)
 
 ## 5. Descriptive Analysis
-### Poisson regression assumption testing
+### 5.1 Poisson regression assumption testing
 For Poisson regression to occur, the assumption that the outcome variable follows a Poisson distribution must be met. Below graph shows that the DV occurrences take on positive values within an interval of space and follows a Poisson distribution.
 
 Investigating descriptive statistics from the below table (made from `setattr` function from the `data.table` library and `kable` function from `knitr` library) shows that most variances are quite small, suggesting that most variable data are clustered together. 
@@ -243,7 +245,7 @@ knitr::kable(DescTable,caption = "Descriptive statistics", booktabs=T)
 
 _(The above table format only shows up when you knit the file - the output straight from R Studio looks basic af so don't be worried!)_
 
-### Scatterplots between DV and each IV
+### 5.2 Scatterplots between DV and each IV
 For the female population rate plot, there shows slight non-linear associations to DV occurrence. There is a slow growth from approximately 80 DV occurrences per 100,000 to 140 DV occurrences per 100,000 when shifting toward 45% female population, though this may be attributed to outlier LGAs. This then plateaus and decreases in DV occurrence when female population increases.
 
 Both the CALD population rate plot and the young age population plot showed no obvious signs of a relationship with DV occurrence per 100,000. The ATSI population rate however, shows an quite a strong increase in DV occurrence per 100,000 when ATSI population rate increases. Similarly, the male unemployment rate plot shows a very gradual increase in DV occurrences with an increase in male unemployment rate, however it then rises dramatically towards the end. This steep rise may be attributed to the outlier LGA. 
@@ -279,7 +281,7 @@ annotate_figure(descGrid,
 ![image](https://user-images.githubusercontent.com/75398560/124450224-900e0380-ddc7-11eb-94fb-52e2a25fb1cb.png)
 
 ## 6. Poisson Regression
-### Regression preparation
+### 6.1 Regression preparation
 I scaled the independent variables using the `scale` function. Some nice short explanations about scaling in R are found [here](https://stackoverflow.com/questions/20256028/understanding-scale-in-r).
 ```r
 LGA.dat.scaled <-  LGA.dat2 %>%
@@ -296,7 +298,7 @@ head(LGA.dat.scaled )
 ```
 Data looks like this: ![image](https://user-images.githubusercontent.com/75398560/124560419-20a81a80-de80-11eb-8ce4-eac4e2d6308e.png)
 
-### Poisson regression base model
+### 6.2 Poisson regression base model
 The *Base Model* is used as a reference point and consisted of only the young age variable. Poisson regression was created using `glm` function with parameter `family=poisson`. This model resulted in being statistically significant with the log odds coefficient estimate being more than two standard errors from zero. The *Base Model* shows that 0.2% of the variability in DV occurrence per 100,000 can be explained by its relationship to the young age rate. Which is very low, like less than 1% low. So clearly, theres definitely more variables that can explain DV occurrence. 
 ```r
 DV.base <- glm(DVrateper100k ~ z.YoungAgeRate,
@@ -310,7 +312,7 @@ display(DV.base)
 ![image](https://user-images.githubusercontent.com/75398560/124562391-51894f00-de82-11eb-8b9a-43c85dea850b.png)
 
 
-### Poisson regression candidate model
+### 6.3 Poisson regression candidate models
 From all four candidate models tested against the *Base Model*, it can clearly be seen that with each added variable, the model fit increases, with *Model 4* showing the best fit in th below table. 
 
 All variables in this model except for young age were statistically significant with the log odds coefficient estimate being more than two standard errors from zero. 
@@ -356,7 +358,7 @@ Furthermore it can be seen that ATSI identified persons had the strongest associ
 
 Further significant limitations to the study is the strong underreporting bias on DV occurrence data, and the aggregate nature of the datasets make inferences about individual behaviour difficult. In light of these limitations, it would be interesting to see future studies focusing on [1] replicating this study with individual-level statistics and [2] investigating further the role of ATSI people in DV occurrence.
 
-_**NOTE:**_ I'm not perfect and neither is my code :stuck_out_tongue_winking_eye:. I'm learning new/more efficient ways to code all the time, so if you find a better way of doing things then go for that! I'm just putting this code and project out there for those interested in the data science field and to show you what I love doing :blush:.
+_**NOTE:**_ I'm not perfect and neither is my code! I'm learning new/more efficient ways to code all the time, so if you find a better way of doing things then go for that. I'm just putting this code and project out there for those interested in the data science field and to show you what I love doing :D
 
 ## 8. References
 1.	Australian Bureau of Statistics. Recorded crime: victims, Australia [Internet]. Canberra: Australian Bureau of Statistics; 2019 [cited 22 Jan 2021]. 5 p. ABS Cat. No.: 4510.0. Available from: https://www.abs.gov.au/statistics/people/crime-and-justice/recorded-crime-victims-australia/2019#articles 
