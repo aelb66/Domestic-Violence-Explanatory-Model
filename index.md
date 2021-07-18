@@ -1,9 +1,7 @@
 # How I created an explanatory model of domestic violence using R and how you can too
 
 <br />
-
 Check out my [personal website](https://www.alolelba.com/) for more projects.
-
 <br />
 
 # Contents
