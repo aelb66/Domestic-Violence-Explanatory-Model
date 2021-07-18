@@ -1,4 +1,4 @@
-# How I created an explanatory model of domestic violence using R and how you can too
+How I created an explanatory model of domestic violence using R and how you can too
 
 Check out my [personal website](https://www.alolelba.com/) for more projects.
 
@@ -7,7 +7,7 @@ Check out my [personal website](https://www.alolelba.com/) for more projects.
 * Data 
 {:toc}
 
-### What is explanatory analysis? 
+## What is explanatory analysis? 
 We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights. 
 
 Here we want to know **what** variables explain domestic violence rates and **how** much they account for domestic violence rates. 
@@ -16,13 +16,13 @@ This is different to classification and prediction analyses where we want to pre
 - For differences between explanatory vs exploratory vs descriptive research click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). 
 - To view differences between explanatory modelling vs predictive modelling click [here](https://www.theanalysisfactor.com/differences-in-model-building-explanatory-and-predictive-models/). 
 
-### Background to the project
+## Background to the project
 Domestic violence (DV) is recognised as a major Australian public health crisis with one in three homicide and sexual assault reports family and DV related (1). Research suggests that those at a higher risk of experiencing DV are young women (i.e., 15-24 years old), those living in rural/remotes areas; as well as areas with a higher proportion of Indigenous residents, culturally and linguistically diverse (CALD) residents and those with higher unemployment rates (2,3,4). Although the research generalises to the Australian community, it would be interesting to see if this is reflected in NSW. Therefore, I hypothesize that socio-demographic and socioeconomic factors are important in explaining DV rates in NSW local government areas (LGAs). 
 
 ![image](https://user-images.githubusercontent.com/75398560/124696219-032e8b80-df28-11eb-82d3-0ade2a4b1992.png)
 [_source_](https://www.pexels.com/@spencer-selover-142259?utm_content=attributionCopyText&utm_medium=referral&utm_source=pexels)
 
-### Domestic violence in Australia
+## Domestic violence in Australia
 It is well known that gender plays a role in DV with on average, one Australian woman each week murdered by her current or former partner (5). Furthermore, the economic cost of domestic violence against women and children in Australia alone is estimated at $21.7 *billion* per year (6). As females are more prone to domestic violence related assault compared to males, I theorise that higher female population rates may increase DV occurrences. Young Australian women are less likely to comprehend the breadth and magnitude of DV-related behaviour, and experience higher reported occurrences of DV compared to older Australian women (7,8). Therefore, I theorise that higher rates of rate of young persons aged between 15-24 years old may increase DV occurrences.
 
 Although there is limited data available, women living in rural areas experience higher risk of DV due to smaller communities, greater societal control and gender norms than metropolitan counterparts (9). Indigenous women are *45 times* more likely to experience DV compared to non-Indigenous women and *35 times* more likely to be hospitalised from DV than non-Indigenous women (10,11). 
