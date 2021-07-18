@@ -2,6 +2,11 @@
 
 Check out my [personal website](https://www.alolelba.com/) for more projects.
 
+# Contents
+{:.no_toc}
+* Data 
+{:toc}
+
 ### What is explanatory analysis? 
 We are trying to explain why and how a phenomenon is the way it is. The key output for this type of analysis are insights. 
 
